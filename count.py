@@ -4,14 +4,6 @@ E-mail: hans.kristian.eidesen@dnvgl.com
 """
 
 import PyPDF2
-import textract
-
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-import nltk
-
-import re
-
 import pandas as pd
     
 # Function to convert list to string   
