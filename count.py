@@ -1,4 +1,6 @@
 """A script that will copy the sentences containing a specific word
+Made by: Hans-Kristian Norum Eidesen
+E-mail: hans.kristian.eidesen@dnvgl.com
 """
 
 import PyPDF2
