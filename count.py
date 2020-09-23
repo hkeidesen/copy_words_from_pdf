@@ -134,10 +134,12 @@ def get_ToC(file):
     # This section will thus remove the chapter number, and only the chapter name is being used to lookup the 
     # chapter text
     text_only = []
-    df_ToC = pd.DataFrame(ToC, columns=['This is the full ToC'])    
+    df_ToC = pd.DataFrame(ToC, columns=['ToC'])
+    df_ToC['Chapter text'] = (df_ToC['ToC'].str.replace('[0-9.]', '')).str.lstrip() #removing numbers and first space, leaving the text only
+    df_ToC['Chapter number'] = (df_ToC['ToC'].str.replace('[a-zA-Z (),–/]', '')).str.replace(r"^(\d+)\.$", r"\1")# .str.lstrip()
     df_ToC.to_excel('ToC.xlsx')
     # print(ToC)
-    return ToC
+    return df_ToC
 
 def get_text_between_string(string, first, last):
     try:
@@ -218,6 +220,7 @@ def get_text_in_chapter(file, word1, word2):
     logic3 = 0
     logic4 = 0
     step = 0
+    
     for word in words_search:
         for sentence in paragraph_one_line:
             if sentence.count(word) > 0:
@@ -229,6 +232,7 @@ def get_text_in_chapter(file, word1, word2):
         current_chapter = ''
         next_chapter = ''
         try:
+            print("\n")
             print('step', step)
             # current_chapter = ''
             # next_chapter = ''
@@ -237,14 +241,14 @@ def get_text_in_chapter(file, word1, word2):
             """Logic 0
                Getting the chapter text based on what is between each chapter heading (chapter number and chapter text)
             """
-            list_with_all_chapters.append(chapters[n])
-            current_chapter = chapters[n]
-            next_chapter = chapters[n+1]
+            list_with_all_chapters.append(chapters['ToC'][n])
+            current_chapter = chapters['ToC'][n]
+            next_chapter = chapters['ToC'][n+1]
             get_text_between_string(paragraph_one_line, current_chapter, next_chapter)
            
             if get_text_between_string(paragraph_one_line, current_chapter, next_chapter) != '':
-                current_chapter = chapters[n]
-                next_chapter = chapters[n+1]
+                current_chapter = chapters['ToC'][n]
+                next_chapter = chapters['ToC'][n+1]
                 logic0 += 1
             """Logic 1:
                Getting the chapter text based on what is between each chapter heading (chapter text only)
@@ -252,8 +256,9 @@ def get_text_in_chapter(file, word1, word2):
             if get_text_between_string(paragraph_one_line, current_chapter, next_chapter) == '':
                 print('Logic 0 failed!')
                 print('Switching to logic 1')
-                current_chapter = re.sub('[!@#$.]', "", chapters[n]).translate(remove_digits)
-                next_chapter = re.sub('[!@#$.]', "", chapters[n+1]).translate(remove_digits)
+                current_chapter = chapters['Chapter text'][n]
+                next_chapter = chapters['Chapter text'][n+1]
+
                 list_with_all_chapters.append(get_text_between_string(paragraph_one_line, current_chapter, next_chapter)) # works. 
                 logic1 += 1
             """Logic 2:
@@ -273,19 +278,13 @@ def get_text_in_chapter(file, word1, word2):
                 size = 0                
                 # These rules looks for if there is a period '.' after the last number, removes it and calls the "get_text_between_string"-function
 
-                if (re.sub('[a-zA-Z ,’\'*–-“” ]', '', chapters[n]))[-1] == '.':
+                if chapters['Chapter number'][n][-1] == '.':
                     # print(current_chapter)
-                    current_chapter = re.sub('[a-zA-Z ,’\'*–-“”]', '', chapters[n])[:-1]
+                    current_chapter = chapters['Chapter number'][n][:-1]
 
-                if (re.sub('[a-zA-Z ,’\'*–-“”]', '', chapters[n+1]))[-1] == '.':
+                if chapters['Chapter number'][n+1][-1] == '.':
                     # print(current_chapter)
-                    next_chapter = re.sub('[a-zA-Z ,’\'*–-“”]', '', chapters[n+1])[:size - 1]
-
-                elif (re.sub('[a-zA-Z ,’\'*–-“” ]', '', chapters[n]))[-1] != '.':
-                    current_chapter = re.sub('[a-zA-Z ,’\'*–-“”]', '', chapters[n])
-
-                elif (re.sub('[a-zA-Z ,’\'*–-“”]', '', chapters[n+1]))[-1] != '.':
-                    next_chapter = re.sub('[a-zA-Z ,’\'*–-“”]', '', chapters[n+1])
+                    next_chapter = chapters['Chapter number'][n+1][:-1]
 
                 # print(current_chapter)
                 list_with_all_chapters.append(get_text_between_string(paragraph_one_line, current_chapter, next_chapter)) # works. The search term removes digits and special characters
@@ -297,13 +296,10 @@ def get_text_in_chapter(file, word1, word2):
             if get_text_between_string(paragraph_one_line, current_chapter, next_chapter) == '':
                 print('Logic 2 failed!')
                 print('Switching to logic 3')
-                ToC = chapters[n]
-                ToC_number = re.sub('[a-zA-Z-]', '', chapters[n])
-                ToC_text = re.sub('[0-9]', '', chapters[n])
-                df_ToC_number_and_text = pd.DataFrame([ToC_number, ToC_text], columns=['Number Text'])
-                print(df_ToC_number_and_text)
-                current_chapter = re.sub('[a-zA-Z-]', '', chapters[n])
-                next_chapter = re.sub('[a-zA-Z-]', '', chapters[n+1])
+                
+                current_chapter = chapters['Chapter number'][n]
+                next_chapter = chapters['Chapter number'][n+1]
+                
                 print("Switching to logic 3")
                 print('Logic 3 reports that current chapter is: ', current_chapter)
                 print('Logic 3 reports that next chapter is: ', next_chapter)
