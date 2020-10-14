@@ -20,6 +20,7 @@ from io import StringIO
 import csv
 import re
 from string import digits
+import json
 
 def __init__(self, ToC, output, paragraph_one_line):
     self.ToC = ToC
@@ -84,6 +85,27 @@ def copy_words(file, word1, word2):
     # Split each sentence by the "." (period)
     sentences_list = paragraph.split(".")
     # empty list that will contain the results
+    sentences_with_word = []
+    # A list that stores the words we want to look for.    
+    words_search = [word1, word2]
+    # # to make sure that no lowercase and uppercase errors are found, every character in paragraph and words_search is converted to lowercase
+    # paragraph = paragraph.lower()
+    # words_search = [word1.lower(), word2.lower()]
+    # Convertint them to a dictiorairy
+    word_sentence_dictionary = {word1:[], word2:[]}
+
+    # Now, we are ready to start our search and store the sentences that contain the word.
+
+    for word in words_search:
+        for sentence in sentences_list:
+            if sentence.count(word)>0:
+                sentences_with_word.append(sentence)
+                word_sentence_dictionary[word] = sentences_with_word
+    return sentences_with_word
+
+def get_senteces_containing_word(sentence_to_search, word1, word2):
+    # sentence_to_search = listToString(sentence_to_search)
+    sentences_list = sentence_to_search.split(".")
     sentences_with_word = []
     # A list that stores the words we want to look for.    
     words_search = [word1, word2]
@@ -186,8 +208,10 @@ def get_text_in_chapter(file, word1, word2):
             # print(ResSearch)
             # print("The page where the text is ", i)
             start_page.append(i)
-            
-    page_of_interest = start_page[1] # the page of interesert (where the looking should begin) is usually the second time the first entry in ToC (e.g. "Scope" etc.) comes in the document
+    try:        
+        page_of_interest = start_page[1] # the page of interesert (where the looking should begin) is usually the second time the first entry in ToC (e.g. "Scope" etc.) comes in the document
+    except IndexError:
+        page_of_interest =start_page[0]
     print("The page of intereset is: ", page_of_interest)
     pdf_to_one_string = ""
     output = []
@@ -331,7 +355,31 @@ def get_text_in_chapter(file, word1, word2):
     df.to_excel('chapters.xlsx')
     print('logic0: ',logic0, 'logic1: ',logic1, 'logic2: ', logic2, 'logic3 :',logic3, 'logic4 :',logic4)
 
-get_text_in_chapter('S-001_2018E.pdf', 'shall', 'should')
+# get_text_in_chapter('NORSOK N-003-2017.pdf', 'shall', 'should')
 # copy_words('S-001_2018E.pdf', 'shall', 'should')
+def read_file_from_excel(file):
+    excel_file = pd.read_excel(file)
+    result = []
+    for i in range(0, len(excel_file)):
+        # print(excel_file.iloc[i]['Text'])
+        result.append((get_senteces_containing_word(str(excel_file.iloc[i]['Text']), 'shall', 'should')))
 
+    excel_file =pd.DataFrame( {'Chapter':excel_file['Chapter'],'Result':result})
+   
+    # excel_file = excel_file.append(result, True)
+    #     # print(get_senteces_containing_word(str(excel_file.iloc[i]['Text']), 'shall', 'should'))
+    # # print(result)
+    # excel_file = excel_file.append(result)
+
+    # for row in excel_file.itertuples(index=True):
+    #     excel_file['Result'] = excel_file['Result'].append(get_senteces_containing_word(str(row['Text']), 'shall', 'should'))
+    # for index, row in excel_file.iterrows():
+    #     # print(str(row['Text']))
+    #     excel_file = excel_file['Result'].append((get_senteces_containing_word(str(row['Text']), 'shall', 'should')))
+        # excel_file['Result'].fillna(0)
+    # excel_file['Result'] = [get_senteces_containing_word(excel_file['Text'], 'shall', 'should') for (excel_file['Text'], 'shall', 'should') in excel_file['Text']]
+        #excel_file['sentences'] = excel_file.append(get_senteces_containing_word(excel_file[index], 'shall', 'should'))
+    # print(excel_file['Result'].head())
+    excel_file.to_excel('result.xlsx')
+read_file_from_excel('S-001_2018E-excel.xlsx')
 # print(get_text_between_string( 'Perform risk analyses and evaluations Risk and safety analyses / studies shall be performed to establish suf ficiently detailed information about the risk associated with the identified hazards and accidental events. The information will be used to evaluate the risk and to decide which solutions (barriers), and related requirements that are needed for preventing, controlling and mitigating the hazards in addition to generic requirements give n by the context. Evaluation of risk includes an assessment of: compliance with predefined evaluation criteria (e.g. minimum requirements and acceptance criteria in context) ; necessary ALARP processes to demonstrate that risk has been reduced to a level as low as reasonably practicable ; uncertainties associated with the hazards, accidental events and their consequences as well as the risk reducing effect of the barriers. The r esults from risk analyses are used for many purposes. One is to provide information and decision support related to the need for and role of risk reducing measures (barriers) and their required performance. Another is to provide decision support regarding the risk level assessed and if this is considered acceptable for the facility. Reference is made to sub clause 5.10 for examples of studies and evaluations. For a development project, the degree of details in the risk and safety analyses / studies will increase as the project matures through different phases. Thus, solutions, assumptions and conservative estimates typically used in early stages may be verified or changed due to more detailed analyses. Identify and define barrier functions, systems and elements (risk treatment)','Perform risk analyses and evaluations', 'Identify and define barrier functions, systems and elements (risk treatment)'))
