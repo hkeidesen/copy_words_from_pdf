@@ -105,7 +105,9 @@ def copy_words(file, word1, word2):
 
 def get_senteces_containing_word(sentence_to_search, word1, word2):
     # sentence_to_search = listToString(sentence_to_search)
-    sentences_list = sentence_to_search.split(".")
+    sentences_list = sentence_to_search.split(". ")
+    # TODO: make a rule that checke wether a word contains a setnecnce with an abbreviations, such as: "i.e., e.g., etc., ref." A
+    # And also if there is a chapter referecne in the sentece
     sentences_with_word = []
     # A list that stores the words we want to look for.    
     words_search = [word1, word2]
@@ -160,7 +162,7 @@ def get_ToC(file):
     df_ToC['Chapter text'] = (df_ToC['ToC'].str.replace('[0-9.]', '')).str.lstrip() #removing numbers and first space, leaving the text only
     df_ToC['Chapter number'] = (df_ToC['ToC'].str.replace('[a-zA-Z (),–/]', '')).str.replace(r"^(\d+)\.$", r"\1")# .str.lstrip()
     df_ToC.to_excel('ToC.xlsx')
-    # print(ToC)
+    print(ToC)
     return df_ToC
 
 def get_text_between_string(string, first, last):
@@ -170,6 +172,7 @@ def get_text_between_string(string, first, last):
         return string[start:end]
     except ValueError:
         return ""
+
 
 
 def get_text_in_chapter(file, word1, word2):
@@ -358,28 +361,30 @@ def get_text_in_chapter(file, word1, word2):
 # get_text_in_chapter('NORSOK N-003-2017.pdf', 'shall', 'should')
 # copy_words('S-001_2018E.pdf', 'shall', 'should')
 def read_file_from_excel(file):
+    """This function reads a cleaned excel file. In this case, the cleaned excel file contains the Norsok Standard where
+    the chapter number and heading (named 'Chapter') is in one column and the chapter text is in another colunm (named 'Text').
+    The excel file is then converted to a pandas dataframe for further processing
+
+    Args:
+        file (excelfile): a cleaned excel file
+    """
     excel_file = pd.read_excel(file)
     result = []
     for i in range(0, len(excel_file)):
         # print(excel_file.iloc[i]['Text'])
-        result.append((get_senteces_containing_word(str(excel_file.iloc[i]['Text']), 'shall', 'should')))
+        """this for loop loops over the dataframe, looks for text in the 'Text' column. It uses the function get_sentences_containing_word,
+        and looks for sentences containing the search words
 
-    excel_file =pd.DataFrame( {'Chapter':excel_file['Chapter'],'Result':result})
-   
-    # excel_file = excel_file.append(result, True)
-    #     # print(get_senteces_containing_word(str(excel_file.iloc[i]['Text']), 'shall', 'should'))
-    # # print(result)
-    # excel_file = excel_file.append(result)
-
-    # for row in excel_file.itertuples(index=True):
-    #     excel_file['Result'] = excel_file['Result'].append(get_senteces_containing_word(str(row['Text']), 'shall', 'should'))
-    # for index, row in excel_file.iterrows():
-    #     # print(str(row['Text']))
-    #     excel_file = excel_file['Result'].append((get_senteces_containing_word(str(row['Text']), 'shall', 'should')))
-        # excel_file['Result'].fillna(0)
-    # excel_file['Result'] = [get_senteces_containing_word(excel_file['Text'], 'shall', 'should') for (excel_file['Text'], 'shall', 'should') in excel_file['Text']]
-        #excel_file['sentences'] = excel_file.append(get_senteces_containing_word(excel_file[index], 'shall', 'should'))
-    # print(excel_file['Result'].head())
+        Args:
+            len ([type]): [description]
+        """
+        result.append((get_senteces_containing_word(str(excel_file.iloc[i]['Text']), 'shall',"should")))
+    excel_file = pd.DataFrame( {'Chapter':excel_file['Chapter'],'Result':result})   
     excel_file.to_excel('result.xlsx')
-read_file_from_excel('S-001_2018E-excel.xlsx')
+
+
+
+# read_file_from_excel('S-001_2018E-excel.xlsx')
 # print(get_text_between_string( 'Perform risk analyses and evaluations Risk and safety analyses / studies shall be performed to establish suf ficiently detailed information about the risk associated with the identified hazards and accidental events. The information will be used to evaluate the risk and to decide which solutions (barriers), and related requirements that are needed for preventing, controlling and mitigating the hazards in addition to generic requirements give n by the context. Evaluation of risk includes an assessment of: compliance with predefined evaluation criteria (e.g. minimum requirements and acceptance criteria in context) ; necessary ALARP processes to demonstrate that risk has been reduced to a level as low as reasonably practicable ; uncertainties associated with the hazards, accidental events and their consequences as well as the risk reducing effect of the barriers. The r esults from risk analyses are used for many purposes. One is to provide information and decision support related to the need for and role of risk reducing measures (barriers) and their required performance. Another is to provide decision support regarding the risk level assessed and if this is considered acceptable for the facility. Reference is made to sub clause 5.10 for examples of studies and evaluations. For a development project, the degree of details in the risk and safety analyses / studies will increase as the project matures through different phases. Thus, solutions, assumptions and conservative estimates typically used in early stages may be verified or changed due to more detailed analyses. Identify and define barrier functions, systems and elements (risk treatment)','Perform risk analyses and evaluations', 'Identify and define barrier functions, systems and elements (risk treatment)'))
+
+# get_ToC("NORSOK N-003-2017.pdf")
